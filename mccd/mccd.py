@@ -827,10 +827,11 @@ class MCCD(object):
                                    verbose=self.modopt_verb)
         weight_glob_cost = costObj([weight_glob_grad],
                                    verbose=self.modopt_verb)
-
+############# Transformation Starlet
         # Transformed components in wavelet (default: Starlet) domain
         transf_comp = [utils.apply_transform(comp[k], self.Phi_filters)
                        for k in range(self.n_ccd + 1)]
+############# Transformation Starlet
 
         # Big loop: Main iteration
         for main_it in range(self.nb_iter):
@@ -840,13 +841,15 @@ class MCCD(object):
                 # Global Components Optimization
 
                 # Components gradient update
+                print(np.shape(conc(weights_glob, axis=1)))
                 source_glob_grad.update_A(conc(weights_glob, axis=1))
                 source_glob_grad.update_H_loc(conc(H_loc, axis=2))
 
                 # Lipschitz constant for ForwardBackward
-                beta = source_glob_grad.spec_rad * 1.5 + rho_phi
+##########                beta = source_glob_grad.spec_rad * 1.5 + rho_phi
+                beta = source_glob_grad.spec_rad * 15
                 tau = 1. / beta
-
+################### PROX ALG
                 # Sparsity prox thresholds update
                 thresh = utils.reg_format(
                     utils.acc_sig_maps(
@@ -866,6 +869,7 @@ class MCCD(object):
                         [filter_convolve(Sigma_k ** 2, self.Phi_filters ** 2)
                          for Sigma_k in thresh]))
                 sparsity_prox.update_threshold(tau * thresholds)
+################### PROX ALG
 
                 # Reweighting. Borrowed from original RCA code
                 if self.nb_reweight:
@@ -873,24 +877,29 @@ class MCCD(object):
                     for _ in range(self.nb_reweight):
                         # Optimize!
                         source_optim = optimalg.ForwardBackward(
-                            transf_comp[self.n_ccd],
+                            ######transf_comp[self.n_ccd]
+                            comp[self.n_ccd],
                             source_glob_grad, sparsity_prox,
                             cost=source_glob_cost,
                             beta_param=1. / beta, auto_iterate=False,
                             verbose=self.verbose, progress=self.verbose)
                         source_optim.iterate(max_iter=self.nb_subiter_S_glob)
-                        transf_comp[self.n_ccd] = source_optim.x_final
-                        reweighter.reweight(transf_comp[self.n_ccd])
+                        comp[self.n_ccd] = source_optim.x_final
+                        #####transf_comp[self.n_ccd] = source_optim.x_final
+                        #####reweighter.reweight(transf_comp[self.n_ccd])
+                        reweighter.reweight(comp[self.n_ccd])
                         thresholds = reweighter.weights
                 else:
                     # Optimize!
-                    source_optim = optimalg.ForwardBackward(
-                        transf_comp[self.n_ccd],
+                    source_optim = optimalg.ForwardBackward(                        
+                        #####transf_comp[self.n_ccd],
+                        comp[self.n_ccd],
                         source_glob_grad, sparsity_prox, cost=source_glob_cost,
                         beta_param=1. / beta, auto_iterate=False,
                         verbose=self.verbose, progress=self.verbose)
                     source_optim.iterate(max_iter=self.nb_subiter_S_glob)
-                    transf_comp[self.n_ccd] = source_optim.x_final
+                    #####transf_comp[self.n_ccd] = source_optim.x_final
+                    comp[self.n_ccd] = source_optim.x_final
 
                     # Save iteration diagnostic data
                     if self.iter_outputs:
@@ -899,11 +908,12 @@ class MCCD(object):
                         source_glob_grad.reset_iter_cost()
 
                 # Update pixel domain global components
-                comp[self.n_ccd] = utils.rca_format(
-                    np.array([filter_convolve(transf_Sj,
-                                              self.Phi_filters,
-                                              filter_rot=True) for
-                              transf_Sj in transf_comp[self.n_ccd]]))
+                #comp[self.n_ccd] = utils.rca_format(
+                #    np.array([filter_convolve(transf_Sj,
+                #                              self.Phi_filters,
+                #                              filter_rot=True) for
+                #              transf_Sj in transf_comp[self.n_ccd]]))
+                comp[self.n_ccd] = utils.rca_format(comp[self.n_ccd])
 
                 # Global Weights Optimization
 
@@ -971,7 +981,8 @@ class MCCD(object):
 
                     # Conda parameters
                     # (lipschitz of diff. part and operator norm of lin. part)
-                    beta = source_loc_grad[k].spec_rad * 1.5 + rho_phi
+                    ######beta = source_loc_grad[k].spec_rad * 1.5 + rho_phi
+                    beta = source_loc_grad[k].spec_rad * 15
                     tau = 1. / beta
                     sigma = (1. / lin_recombine[k].norm ** 2) * beta / 2
 
@@ -987,20 +998,21 @@ class MCCD(object):
                             weights_loc[k],
                             sig_data=np.ones((self.shap[k][2],)) \
                             * self.sig_min[k]))
-
+####################
                     thresholds = self.ksig_loc * np.sqrt(
                         np.array([filter_convolve(
                             Sigma_k ** 2, self.Phi_filters ** 2)
                             for Sigma_k in thresh]))
                     sparsity_prox.update_threshold(tau * thresholds)
-
+####################
                     # Reweighting
                     if self.nb_reweight:
                         reweighter = cwbReweight(self.nb_reweight)
                         for _ in range(self.nb_reweight):
                             # Optimize!
                             source_optim = optimalg.Condat(
-                                transf_comp[k],
+                                #transf_comp[k],
+                                comp[k],
                                 dual_comp[k],
                                 source_loc_grad[k],
                                 sparsity_prox,
@@ -1012,13 +1024,16 @@ class MCCD(object):
                                 sigma=sigma,
                                 verbose=self.verbose,
                                 progress=self.verbose)
-                            transf_comp[k] = source_optim.x_final
-                            reweighter.reweight(transf_comp[k])
+                            #transf_comp[k] = source_optim.x_final
+                            comp[k] = source_optim.x_final
+                            #reweighter.reweight(transf_comp[k])
+                            reweighter.reweight(comp[k])
                             thresholds = reweighter.weights
                     else:
                         # Optimize!
                         source_optim = optimalg.Condat(
-                            transf_comp[k],
+                            #transf_comp[k],
+                            comp[k],
                             dual_comp[k],
                             source_loc_grad[k],
                             sparsity_prox,
@@ -1029,7 +1044,8 @@ class MCCD(object):
                             tau=tau, sigma=sigma,
                             verbose=self.verbose,
                             progress=self.verbose)
-                        transf_comp[k] = source_optim.x_final
+                        #transf_comp[k] = source_optim.x_final
+                        comp[k] = source_optim.x_final
 
                         # Save iteration diagnostic data
                         if self.iter_outputs:
@@ -1038,11 +1054,12 @@ class MCCD(object):
                             source_loc_grad[k].reset_iter_cost()
 
                     # Update pixel domain local components
-                    comp[k] = utils.rca_format(
-                        np.array([filter_convolve(transf_Sj,
-                                                  self.Phi_filters,
-                                                  filter_rot=True) for
-                                  transf_Sj in transf_comp[k]]))
+                    #comp[k] = utils.rca_format(
+                    #    np.array([filter_convolve(transf_Sj,
+                    #                              self.Phi_filters,
+                    #                              filter_rot=True) for
+                    #              transf_Sj in transf_comp[k]]))
+                    comp[k] = utils.rca_format(comp[k])
 
                     # Local weights Optimization
 

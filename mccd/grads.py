@@ -422,12 +422,15 @@ class SourceLocGrad(GradParent, PowerMethod):
         numpy.ndarray result
 
         """
-        S = utils.rca_format(
-            np.array([filter_convolve(transf_Sj, self.filters, filter_rot=True)
-                      for transf_Sj in transf_S]))
+        #S = utils.rca_format(
+        #    np.array([filter_convolve(transf_Sj, self.filters, filter_rot=True)
+        #              for transf_Sj in transf_S]))
+        S = utils.rca_format(transf_S)
         dec_rec = np.array(
             [nf * utils.degradation_op(S.dot(A_i), shift_ker, self.D)
              for nf, A_i, shift_ker in zip(self.normfacs,
+            #[nf * utils.degradation_op(Sj, shift_ker, self.D)
+             #for nf, Sj, shift_ker in zip(self.normfacs,
                                            self.A.T,
                                            utils.reg_format(self.ker))])
         self._current_rec = utils.rca_format(dec_rec)
@@ -442,7 +445,8 @@ class SourceLocGrad(GradParent, PowerMethod):
                                            x,
                                            utils.reg_format(self.ker_rot))])
         x, upsamp_x = utils.rca_format(x), utils.rca_format(upsamp_x)
-        return utils.apply_transform(upsamp_x.dot(self.A.T), self.filters)
+        #return utils.apply_transform(upsamp_x.dot(self.A.T), self.filters)
+        return upsamp_x.dot(self.A.T), self.filters
 
     def cost(self, x, y=None, verbose=False):
         r"""Compute data fidelity term.
@@ -572,13 +576,18 @@ class SourceGlobGrad(GradParent, PowerMethod):
         numpy.ndarray result
 
         """
-        S = utils.rca_format(
-            np.array([filter_convolve(transf_Sj, self.filters, filter_rot=True)
-                      for transf_Sj in transf_S]))
+        
+        #S = utils.rca_format(
+        #    np.array([filter_convolve(transf_Sj, self.filters, filter_rot=True)
+        #              for transf_Sj in transf_S]))
+        S = utils.rca_format(transf_S)
+        print(np.shape(S))       
         dec_rec = np.array(
             [nf * utils.degradation_op(S.dot(A_i), shift_ker, self.D)
              for nf, A_i, shift_ker in zip(self.normfacs,
-                                           self.A.T,
+            #[nf * utils.degradation_op(Sj, shift_ker, self.D)
+             #for nf, Sj, shift_ker in zip(self.normfacs,
+                                           self.A.T,                                           
                                            utils.reg_format(self.ker))])
         self._current_rec = utils.rca_format(dec_rec)
         return self._current_rec
@@ -591,7 +600,8 @@ class SourceGlobGrad(GradParent, PowerMethod):
              nf, x_i, shift_ker
              in zip(self.normfacs, x, utils.reg_format(self.ker_rot))])
         x, upsamp_x = utils.rca_format(x), utils.rca_format(upsamp_x)
-        return utils.apply_transform(upsamp_x.dot(self.A.T), self.filters)
+        #return utils.apply_transform(upsamp_x.dot(self.A.T), self.filters)
+        return upsamp_x.dot(self.A.T)
 
     def cost(self, x, y=None, verbose=False):
         r"""Compute data fidelity term.
