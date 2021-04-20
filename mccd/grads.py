@@ -377,10 +377,10 @@ class SourceLocGrad(GradParent, PowerMethod):
         self.save_iter_cost = save_iter_cost
         self.FdH_glob = None
 
-
-        hr_shape = np.array(data.shape[:2]) * D
+        hr_shape = np.array(self.obs_data.shape[:2]) * self.D
+        power_method_shape = tuple([hr_shape[0], hr_shape[1], self.A.shape[0]])
         PowerMethod.__init__(self, self.trans_op_op,
-                             (A.shape[0], filters.shape[0]) + tuple(hr_shape),
+                             power_method_shape,
                              auto_run=False)
 
         self._current_rec = None
@@ -409,13 +409,13 @@ class SourceLocGrad(GradParent, PowerMethod):
                                            utils.reg_format(self.H_glob))])
         self.FdH_glob = utils.rca_format(dec_H_glob)
 
-    def MX(self, transf_S):
+    def MX(self, S):
         r"""Apply degradation operator and renormalize.
 
         Parameters
         ----------
-        transf_S : numpy.ndarray
-            Current eigenPSFs in wavelet (by default Starlet) space.
+        S : numpy.ndarray
+            Current eigenPSFs in direct space.
 
         Returns
         -------
@@ -425,7 +425,8 @@ class SourceLocGrad(GradParent, PowerMethod):
         #S = utils.rca_format(
         #    np.array([filter_convolve(transf_Sj, self.filters, filter_rot=True)
         #              for transf_Sj in transf_S]))
-        S = utils.rca_format(transf_S)
+        # S = utils.rca_format(transf_S)
+
         dec_rec = np.array(
             [nf * utils.degradation_op(S.dot(A_i), shift_ker, self.D)
              for nf, A_i, shift_ker in zip(self.normfacs,
@@ -531,9 +532,10 @@ class SourceGlobGrad(GradParent, PowerMethod):
         self.save_iter_cost = save_iter_cost
         self.FdH_loc = None
 
-        hr_shape = np.array(data.shape[:2]) * D
+        hr_shape = np.array(self.obs_data.shape[:2]) * self.D
+        power_method_shape = tuple([hr_shape[0], hr_shape[1], self.A.shape[0]])
         PowerMethod.__init__(self, self.trans_op_op,
-                             (A.shape[0], filters.shape[0]) + tuple(hr_shape),
+                             power_method_shape,
                              auto_run=False)
 
         self._current_rec = None
@@ -563,13 +565,13 @@ class SourceGlobGrad(GradParent, PowerMethod):
                  utils.reg_format(self.H_loc))])
         self.FdH_loc = utils.rca_format(dec_H_loc)
 
-    def MX(self, transf_S):
+    def MX(self, S):
         r"""Apply degradation operator and renormalize.
 
         Parameters
         ----------
-        transf_S : numpy.ndarray
-            Current eigenPSFs in Starlet space.
+        S : numpy.ndarray (rca_format)
+            Current eigenPSFs in direct space.
 
         Returns
         -------
@@ -580,8 +582,9 @@ class SourceGlobGrad(GradParent, PowerMethod):
         #S = utils.rca_format(
         #    np.array([filter_convolve(transf_Sj, self.filters, filter_rot=True)
         #              for transf_Sj in transf_S]))
-        S = utils.rca_format(transf_S)
-        print(np.shape(S))       
+        # S = utils.rca_format(transf_S)
+        # print(np.shape(S))
+
         dec_rec = np.array(
             [nf * utils.degradation_op(S.dot(A_i), shift_ker, self.D)
              for nf, A_i, shift_ker in zip(self.normfacs,
