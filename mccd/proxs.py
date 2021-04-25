@@ -14,6 +14,8 @@ from __future__ import absolute_import, print_function
 import numpy as np
 from modopt.signal.wavelet import filter_convolve
 import mccd.utils as utils
+import tensorflow as tf
+from tensorflow import keras
 
 
 class LinRecombine(object):
@@ -127,6 +129,109 @@ class StarletThreshold(object):
         transf_data[:, :-1] = utils.SoftThresholding(transf_data[:, :-1],
                                                      self.threshold[:, :-1])
         return transf_data
+
+    def cost(self, x, y):
+        r"""Return cost."""
+        return 0
+    
+class Learnlets(object):
+    r"""Apply Learnlets denoising.
+
+    Parameters
+    ----------
+    model: str
+        Which denoising algorithm to use.
+
+    """
+
+    def __init__(self, items=None):
+        r"""Initialize class attributes."""
+        self.model = keras.models.load_model('saved_learnlets')
+        self.noise = None
+        
+    def mad(self, x):
+        r"""Compute an estimation of the standard deviation 
+        of a Gaussian distribution using the robust 
+        MAD (Median Absolute Deviation) estimator."""
+        return 1.4826*np.median(np.abs(x - np.median(x)))
+
+    def noise_estimator(self, image):
+        r"""Estimate the noise level of the image."""
+        # Use adaptive moments estimator
+        my_moments = galsim.hsm.FindAdaptiveMom(galsim.Image(image))
+        # Calculate star flux
+        star_flux = my_moments.moments_amp
+        obs_centroid = [my_moments.moments_centroid.x, my_moments.moments_centroid.y]
+        obs_sigma = my_moments.moments_sigma
+        # Calculate window function for estimating the noise
+        # Taking 5*sigma we are probably cutting all the flux from the star
+        window = np.ones(image.shape, dtype=bool)
+        for coord_x in range(image.shape[0]):
+            for coord_y in range(image.shape[1]):
+                if np.sqrt((coord_x - obs_centroid[0])**2 + (coord_y - obs_centroid[1])**2) <= 5*obs_sigma :
+                    window[coord_x, coord_y] = False
+        # Calculate noise std dev
+        return self.mad(image[window])
+    
+    def convert_and_pad(self, image):
+        r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
+        image = tf.reshape(tf.convert_to_tensor(img), 
+                           [np.shape(img)[0], np.shape(img)[1], np.shape(img)[2], 1])
+        pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
+        return tf.pad(image, pad, "CONSTANT")
+       
+      
+    def crop_and_convert(self, image):
+        r"""Crop back the image to its original size and convert it to np.array"""
+        image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(img)[0], 51, 51])
+        return image.numpy()
+
+    def op(self, image, **kwargs):
+        r"""Apply Learnlets denoising."""
+        # Threshold all scales but the coarse
+        self.noise = np.array([self.noise_estimator(image[_i,:,:]) for _i in np.arange(len(image))])
+        self.noise = tf.reshape(tf.convert_to_tensor(self.noise), [len(image), 1])
+        image = self.convert_and_pad(image)
+        image = self.model.predict(image, self.noise)
+        return self.crop_and_convert(image)
+
+    def cost(self, x, y):
+        r"""Return cost."""
+        return 0
+    
+class Unets(object):
+    r"""Apply Unets denoising.
+
+    Parameters
+    ----------
+    model: str
+        Which denoising algorithm to use.
+
+    """
+
+    def __init__(self, items=None):
+        r"""Initialize class attributes."""
+        self.model = keras.models.load_model('saved_unets')
+        
+    def convert_and_pad(self, image):
+        r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
+        image = tf.reshape(tf.convert_to_tensor(img), 
+                           [np.shape(img)[0], np.shape(img)[1], np.shape(img)[2], 1])
+        pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
+        return tf.pad(image, pad, "CONSTANT")
+       
+      
+    def crop_and_convert(self, image):
+        r"""Crop back the image to its original size and convert it to np.array"""
+        image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(img)[0], 51, 51])
+        return image.numpy()
+
+    def op(self, image, **kwargs):
+        r"""Apply Unets denoising."""
+        # Threshold all scales but the coarse
+        image = self.convert_and_pad(image)
+        image = self.model.predict(image)
+        return self.crop_and_convert(image)
 
     def cost(self, x, y):
         r"""Return cost."""
@@ -290,7 +395,7 @@ class ClassicProxL2(object):
 
     Reference: « Mixed-norm estimates for the M/EEG inverse problem using
     accelerated gradient methods
-    Alexandre Gramfort, Matthieu Kowalski, Matti Hämäläinen »
+    Alexandre Gramfort, Matthieu Kowalski, Matti Hämäläinen »
     """
 
     def __init__(self):

@@ -1,0 +1,32 @@
+Metadata-Version: 2.1
+Name: mccd
+Version: 0.0.4
+Summary: builtins Author: Tobias Liaudat  Email: tobiasliaudat@gmail.com  Year: 2020  Info: A non-parametric Multi-CCD Point Spread Function modelling.
+Home-page: https://github.com/CosmoStat/mccd
+Author: Tobias Liaudat
+Author-email: tobiasliaudat@gmail.com
+License: MIT
+Description: 
+        MCCD Point Spread Function modelling
+        ====================================
+        
+        :Author: `Tobias Liaudat <https://tobias-liaudat.github.io>`_
+        
+        :Version: 0.0.3
+        
+        :Repository: `https://github.com/CosmoStat/mccd <https://github.com/CosmoStat/mccd>`_
+        
+        :Documentation: `https://cosmostat.github.io/mccd/ <https://cosmostat.github.io/mccd/>`_
+        
+        :Description: The non-parametric MCCD PSF modelling, or MCCD for short, is a Point Spread Function modelling pure python package. It is used to generate a PSF model based on stars observations in the field of view. Once trained, the MCCD PSF model can then recover the PSF at any position in the field of view.
+        
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3.6
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Topic :: Scientific/Engineering
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Description-Content-Type: text/x-rst
