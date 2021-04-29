@@ -770,7 +770,11 @@ class MCCD(object):
             verbose=self.verbose)
 
         # Proxs for component optimization
-        sparsity_prox = prox.StarletThreshold(0)
+
+        print(np.shape(comp[0]))
+        print(np.shape(utils.reg_format(comp[0])))
+        #sparsity_prox = prox.StarletThreshold(0)
+        sparsity_prox = prox.Unets()
         pos_prox = [prox.PositityOff(H_k) for H_k in H_glob]
         lin_recombine = [prox.LinRecombine(weights_loc[k], self.Phi_filters)
                          for k in range(self.n_ccd)]
@@ -841,7 +845,6 @@ class MCCD(object):
                 # Global Components Optimization
 
                 # Components gradient update
-                print(np.shape(conc(weights_glob, axis=1)))
                 source_glob_grad.update_A(conc(weights_glob, axis=1))
                 source_glob_grad.update_H_loc(conc(H_loc, axis=2))
 
@@ -851,25 +854,27 @@ class MCCD(object):
                 tau = 1. / beta
 ################### PROX ALG
                 # Sparsity prox thresholds update
-                thresh = utils.reg_format(
-                    utils.acc_sig_maps(
-                        self.shap[self.n_ccd],
-                        conc(self.shift_ker_stack_adj, axis=2),
-                        conc(self.sigs),
-                        conc(self.flux),
-                        self.flux_ref[self.n_ccd],
-                        self.upfact,
-                        conc(weights_glob, axis=1),
-                        sig_data=np.ones(
-                                (self.shap[self.n_ccd][2],)) \
-                        * self.sig_min[self.n_ccd]))
+##########                thresh = utils.reg_format(
+##########                    utils.acc_sig_maps(
+##########                        self.shap[self.n_ccd],
+##########                        conc(self.shift_ker_stack_adj, axis=2),
+##########                        conc(self.sigs),
+##########                        conc(self.flux),
+##########                        self.flux_ref[self.n_ccd],
+##########                        self.upfact,
+##########                        conc(weights_glob, axis=1),
+##########                        sig_data=np.ones(
+##########                                (self.shap[self.n_ccd][2],)) \
+##########                        * self.sig_min[self.n_ccd]))
 
-                thresholds = self.ksig_glob * np.sqrt(
-                    np.array(
-                        [filter_convolve(Sigma_k ** 2, self.Phi_filters ** 2)
-                         for Sigma_k in thresh]))
-                sparsity_prox.update_threshold(tau * thresholds)
+##########                thresholds = self.ksig_glob * np.sqrt(
+##########                    np.array(
+##########                        [filter_convolve(Sigma_k ** 2, self.Phi_filters ** 2)
+##########                         for Sigma_k in thresh]))
+##########                sparsity_prox.update_threshold(tau * thresholds)
 ################### PROX ALG
+                print("allo")
+                print(np.shape(comp[0]))
 
                 # Reweighting. Borrowed from original RCA code
                 if self.nb_reweight:
@@ -913,7 +918,6 @@ class MCCD(object):
                 #                              self.Phi_filters,
                 #                              filter_rot=True) for
                 #              transf_Sj in transf_comp[self.n_ccd]]))
-                comp[self.n_ccd] = utils.rca_format(comp[self.n_ccd])
 
                 # Global Weights Optimization
 
@@ -987,23 +991,23 @@ class MCCD(object):
                     sigma = (1. / lin_recombine[k].norm ** 2) * beta / 2
 
                     # Sparsity prox thresholds update
-                    thresh = utils.reg_format(
-                        utils.acc_sig_maps(
-                            self.shap[k],
-                            self.shift_ker_stack_adj[k],
-                            self.sigs[k],
-                            self.flux[k],
-                            self.flux_ref[k],
-                            self.upfact,
-                            weights_loc[k],
-                            sig_data=np.ones((self.shap[k][2],)) \
-                            * self.sig_min[k]))
+##########                    thresh = utils.reg_format(
+##########                        utils.acc_sig_maps(
+##########                            self.shap[k],
+##########                            self.shift_ker_stack_adj[k],
+##########                            self.sigs[k],
+##########                            self.flux[k],
+##########                            self.flux_ref[k],
+##########                            self.upfact,
+##########                            weights_loc[k],
+##########                            sig_data=np.ones((self.shap[k][2],)) \
+##########                            * self.sig_min[k]))
 ####################
-                    thresholds = self.ksig_loc * np.sqrt(
-                        np.array([filter_convolve(
-                            Sigma_k ** 2, self.Phi_filters ** 2)
-                            for Sigma_k in thresh]))
-                    sparsity_prox.update_threshold(tau * thresholds)
+##########                    thresholds = self.ksig_loc * np.sqrt(
+##########                        np.array([filter_convolve(
+##########                            Sigma_k ** 2, self.Phi_filters ** 2)
+##########                            for Sigma_k in thresh]))
+##########                    sparsity_prox.update_threshold(tau * thresholds)
 ####################
                     # Reweighting
                     if self.nb_reweight:
@@ -1059,7 +1063,7 @@ class MCCD(object):
                     #                              self.Phi_filters,
                     #                              filter_rot=True) for
                     #              transf_Sj in transf_comp[k]]))
-                    comp[k] = utils.rca_format(comp[k])
+
 
                     # Local weights Optimization
 
