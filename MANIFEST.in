@@ -1,0 +1,4 @@
+include mccd/saving_unets/*.pb
+include mccd/saving_unets/variables/*
+include mccd/saved_learnlets/*.pb
+include mccd/saved_learnlets/variables/*

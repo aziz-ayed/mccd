@@ -17,6 +17,7 @@ import mccd.utils as utils
 import tensorflow as tf
 from . import saving_unets as unet_model
 
+
 class LinRecombine(object):
     r"""Multiply eigenvectors ``S`` and (factorized) weights ``A``.
 
