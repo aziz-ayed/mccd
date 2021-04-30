@@ -42,4 +42,7 @@ setup(
         "Topic :: Scientific/Engineering",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers"],
+    package_data = {
+    'saving_unets': ['*'],
+    'saved_learnlets': ['*']},
 )

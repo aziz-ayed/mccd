@@ -15,7 +15,7 @@ import numpy as np
 from modopt.signal.wavelet import filter_convolve
 import mccd.utils as utils
 import tensorflow as tf
-
+from . import saving_unets as unet_model
 
 class LinRecombine(object):
     r"""Multiply eigenvectors ``S`` and (factorized) weights ``A``.
@@ -207,10 +207,9 @@ class Unets(object):
         Which denoising algorithm to use.
 
     """
-
     def __init__(self, items=None):
         r"""Initialize class attributes."""
-        self.model = tf.keras.models.load_model('./mccd/saving_unets')
+        self.model = tf.keras.models.load_model(unet_model.__path__[0])
 
     def convert_and_pad(self, image):
         r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
@@ -219,8 +218,6 @@ class Unets(object):
         # pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
         # return tf.pad(image, pad, "CONSTANT")
         return image
-
-
 
     def crop_and_convert(self, image):
         r"""Crop back the image to its original size and convert it to np.array"""
