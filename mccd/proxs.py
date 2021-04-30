@@ -15,7 +15,6 @@ import numpy as np
 from modopt.signal.wavelet import filter_convolve
 import mccd.utils as utils
 import tensorflow as tf
-from tensorflow import keras
 
 
 class LinRecombine(object):
@@ -133,7 +132,7 @@ class StarletThreshold(object):
     def cost(self, x, y):
         r"""Return cost."""
         return 0
-    
+
 class Learnlets(object):
     r"""Apply Learnlets denoising.
 
@@ -148,10 +147,10 @@ class Learnlets(object):
         r"""Initialize class attributes."""
         self.model = keras.models.load_model('saved_learnlets')
         self.noise = None
-        
+
     def mad(self, x):
-        r"""Compute an estimation of the standard deviation 
-        of a Gaussian distribution using the robust 
+        r"""Compute an estimation of the standard deviation
+        of a Gaussian distribution using the robust
         MAD (Median Absolute Deviation) estimator."""
         return 1.4826*np.median(np.abs(x - np.median(x)))
 
@@ -172,15 +171,15 @@ class Learnlets(object):
                     window[coord_x, coord_y] = False
         # Calculate noise std dev
         return self.mad(image[window])
-    
+
     def convert_and_pad(self, image):
         r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
-        image = tf.reshape(tf.convert_to_tensor(image), 
+        image = tf.reshape(tf.convert_to_tensor(image),
                            [np.shape(image)[0], np.shape(image)[1], np.shape(image)[2], 1])
         pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
         return tf.pad(image, pad, "CONSTANT")
-       
-      
+
+
     def crop_and_convert(self, image):
         r"""Crop back the image to its original size and convert it to np.array"""
         image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(image)[0], 51, 51])
@@ -198,7 +197,7 @@ class Learnlets(object):
     def cost(self, x, y):
         r"""Return cost."""
         return 0
-    
+
 class Unets(object):
     r"""Apply Unets denoising.
 
@@ -211,18 +210,18 @@ class Unets(object):
 
     def __init__(self, items=None):
         r"""Initialize class attributes."""
-        self.model = keras.models.load_model('/Users/oa265351/Desktop/mccd/mccd/saving_unets')
-        
+        self.model = tf.keras.models.load_model('./mccd/saving_unets')
+
     def convert_and_pad(self, image):
         r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
-        image = tf.reshape(tf.convert_to_tensor(image), 
+        image = tf.reshape(tf.convert_to_tensor(image),
                            [np.shape(image)[0], np.shape(image)[1], np.shape(image)[2], 1])
         # pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
         # return tf.pad(image, pad, "CONSTANT")
         return image
-       
-       
-      
+
+
+
     def crop_and_convert(self, image):
         r"""Crop back the image to its original size and convert it to np.array"""
         #image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(image)[0], 51, 51])
