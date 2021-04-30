@@ -211,19 +211,22 @@ class Unets(object):
 
     def __init__(self, items=None):
         r"""Initialize class attributes."""
-        self.model = keras.models.load_model('/Users/oa265351/Desktop/mccd/mccd/saved_unets')
+        self.model = keras.models.load_model('/Users/oa265351/Desktop/mccd/mccd/saving_unets')
         
     def convert_and_pad(self, image):
         r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
         image = tf.reshape(tf.convert_to_tensor(image), 
                            [np.shape(image)[0], np.shape(image)[1], np.shape(image)[2], 1])
-        pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
-        return tf.pad(image, pad, "CONSTANT")
+        # pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
+        # return tf.pad(image, pad, "CONSTANT")
+        return image
+       
        
       
     def crop_and_convert(self, image):
         r"""Crop back the image to its original size and convert it to np.array"""
-        image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(image)[0], 51, 51])
+        #image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(image)[0], 51, 51])
+        image = tf.reshape(image, [np.shape(image)[0], 51, 51])
         return image.numpy()
 
     def op(self, image, **kwargs):
