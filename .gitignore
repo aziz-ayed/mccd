@@ -36,6 +36,7 @@ tests/hidden_tests/
 
 # Mac hidden file
 *.DS_Store
+mccd/*.DS_Store
 
 # Ignore files from pycharm
 .idea/*
