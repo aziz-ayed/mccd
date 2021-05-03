@@ -776,7 +776,9 @@ class MCCD(object):
         #sparsity_prox = prox.StarletThreshold(0)
         sparsity_prox = prox.Unets()
         pos_prox = [prox.PositityOff(H_k) for H_k in H_glob]
-        lin_recombine = [prox.LinRecombine(weights_loc[k], self.Phi_filters)
+        # lin_recombine = [prox.LinRecombine(weights_loc[k], self.Phi_filters)
+        #                  for k in range(self.n_ccd)]
+        lin_recombine = [prox.LinRecombineNoFilters(weights_loc[k])
                          for k in range(self.n_ccd)]
 
         # Proxs for weight optimization
@@ -833,8 +835,8 @@ class MCCD(object):
                                    verbose=self.modopt_verb)
 ############# Transformation Starlet
         # Transformed components in wavelet (default: Starlet) domain
-        transf_comp = [utils.apply_transform(comp[k], self.Phi_filters)
-                       for k in range(self.n_ccd + 1)]
+        # transf_comp = [utils.apply_transform(comp[k], self.Phi_filters)
+        #                for k in range(self.n_ccd + 1)]
 ############# Transformation Starlet
 
         # Big loop: Main iteration
