@@ -445,9 +445,10 @@ class SourceLocGrad(GradParent, PowerMethod):
              for nf, x_i, shift_ker in zip(self.normfacs,
                                            x,
                                            utils.reg_format(self.ker_rot))])
-        x, upsamp_x = utils.rca_format(x), utils.rca_format(upsamp_x)
+        # x = utils.rca_format(x)
+        upsamp_x = utils.rca_format(upsamp_x)
         #return utils.apply_transform(upsamp_x.dot(self.A.T), self.filters)
-        return upsamp_x.dot(self.A.T), self.filters
+        return upsamp_x.dot(self.A.T)
 
     def cost(self, x, y=None, verbose=False):
         r"""Compute data fidelity term.
@@ -602,7 +603,8 @@ class SourceGlobGrad(GradParent, PowerMethod):
             [nf * utils.adjoint_degradation_op(x_i, shift_ker, self.D) for
              nf, x_i, shift_ker
              in zip(self.normfacs, x, utils.reg_format(self.ker_rot))])
-        x, upsamp_x = utils.rca_format(x), utils.rca_format(upsamp_x)
+        # x = utils.rca_format(x)
+        upsamp_x = utils.rca_format(upsamp_x)
         #return utils.apply_transform(upsamp_x.dot(self.A.T), self.filters)
         return upsamp_x.dot(self.A.T)
 
