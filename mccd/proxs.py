@@ -66,6 +66,47 @@ class LinRecombine(ProximityParent):
             U, s, Vt = np.linalg.svd(self.A.dot(self.A.T), full_matrices=False)
             self.norm = np.sqrt(s[0])
 
+class LinRecombineNoFilters(ProximityParent):
+    r"""Multiply eigenvectors ``S`` and (factorized) weights ``A``.
+
+    Maintain the knowledge about the linear operator norm which is calculated
+    as the spectral norm (highest eigenvalue of the matrix).
+    The recombination is done with ``S`` living in the direct domain.
+
+    Parameters
+    ----------
+    A: numpy.ndarray
+        Matrix defining the linear operator.
+    compute_norm: bool
+        Computation of the matrix spectral radius in the initialization.
+    """
+
+    def __init__(self, A, compute_norm=False):
+        r"""Initialize class attributes."""
+        self.A = A
+        self.op = self.recombine
+        self.adj_op = self.adj_rec
+        if compute_norm:
+            U, s, Vt = np.linalg.svd(self.A.dot(self.A.T), full_matrices=False)
+            self.norm = np.sqrt(s[0])
+
+    def recombine(self, S):
+        r"""Recombine new S and return it."""
+        return S.dot(self.A)
+
+    def adj_rec(self, Y):
+        r"""Return the adjoint operator of ``recombine``."""
+        return Y.dot(self.A.T)
+
+    def update_A(self, new_A, update_norm=True):
+        r"""Update the ``A`` matrix.
+
+        Also calculate the operator norm of A.
+        """
+        self.A = new_A
+        if update_norm:
+            U, s, Vt = np.linalg.svd(self.A.dot(self.A.T), full_matrices=False)
+            self.norm = np.sqrt(s[0])
 
 class KThreshold(ProximityParent):
     r"""Define linewise hard-thresholding operator with variable thresholds.
