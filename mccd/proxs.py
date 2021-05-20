@@ -16,7 +16,11 @@ from modopt.signal.wavelet import filter_convolve
 from modopt.opt.proximity import ProximityParent
 import mccd.utils as utils
 import tensorflow as tf
+import galsim
 from . import saving_unets as unet_model
+from learning_wavelets.models.learnlet_model import Learnlet
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.optimizers import Adam
 
 
 class LinRecombine(ProximityParent):
@@ -182,13 +186,47 @@ class Learnlets(ProximityParent):
     Parameters
     ----------
     model: str
-        Which denoising algorithm to use.
+        Which denoising algorithm to use. 
+        We couldn't save the whole architecture of the model, thus we use the weights of the model. However, this requires a 
+        first step of initialization that we didn't need for the U-Nets.
 
     """
 
     def __init__(self, items=None):
         r"""Initialize class attributes."""
-        self.model = keras.models.load_model('saved_learnlets')
+        im_val = tf.convert_to_tensor(np.random.rand(2,51,51,1))
+        std_val = tf.convert_to_tensor(np.random.rand(2))
+        run_params = {
+            'denoising_activation': 'dynamic_soft_thresholding',
+            'learnlet_analysis_kwargs':{
+                'n_tiling': 64, 
+                'mixing_details': False,    
+                'skip_connection': True,
+            },
+            'learnlet_synthesis_kwargs': {
+                'res': True,
+            },
+            'threshold_kwargs':{
+                'noise_std_norm': True,
+            },
+        #     'wav_type': 'bior',
+            'n_scales': 5,
+            'n_reweights_learn': 1,
+            'clip': False,
+        }
+        learnlets=Learnlet(**run_params)
+        learnlets.compile(optimizer=Adam(lr=1e-3),
+            loss='mse',
+        )
+        learnlets.fit(
+            (im_val, std_val), 
+            im_val,
+            validation_data=((im_val, std_val), im_val),
+            steps_per_epoch=1, 
+            epochs=1,
+            batch_size=12,)
+        learnlets.load_weights('/Users/oa265351/Desktop/mccd_v3/mccd/saving_learnlets/cp.h5')
+        self.model = learnlets
         self.noise = None
 
     def mad(self, x):
@@ -199,43 +237,42 @@ class Learnlets(ProximityParent):
 
     def noise_estimator(self, image):
         r"""Estimate the noise level of the image."""
-        # Use adaptive moments estimator
-        my_moments = galsim.hsm.FindAdaptiveMom(galsim.Image(image))
-        # Calculate star flux
-        star_flux = my_moments.moments_amp
-        obs_centroid = [my_moments.moments_centroid.x, my_moments.moments_centroid.y]
-        obs_sigma = my_moments.moments_sigma
+
         # Calculate window function for estimating the noise
-        # Taking 5*sigma we are probably cutting all the flux from the star
+        # We couldn't use Galsim to estimate the moments, so we chose to work with the real center of the image (25.5,25.5)
+        # instead of using the real centroid. Also, we use 13 instead of 5*obs_sigma, so that we are sure to cut all the flux
+        # from the star
         window = np.ones(image.shape, dtype=bool)
         for coord_x in range(image.shape[0]):
             for coord_y in range(image.shape[1]):
-                if np.sqrt((coord_x - obs_centroid[0])**2 + (coord_y - obs_centroid[1])**2) <= 5*obs_sigma :
+                if np.sqrt((coord_x - 25.5)**2 + (coord_y - 25.5)**2) <= 13 :
                     window[coord_x, coord_y] = False
         # Calculate noise std dev
         return self.mad(image[window])
-
+    
     def convert_and_pad(self, image):
         r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
         image = tf.reshape(tf.convert_to_tensor(image),
                            [np.shape(image)[0], np.shape(image)[1], np.shape(image)[2], 1])
-        pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
-        return tf.pad(image, pad, "CONSTANT")
-
+        # pad = tf.constant([[0,0], [6,7],[6,7], [0,0]])
+        # return tf.pad(image, pad, "CONSTANT")
+        return image
 
     def crop_and_convert(self, image):
         r"""Crop back the image to its original size and convert it to np.array"""
-        image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(image)[0], 51, 51])
+        #image = tf.reshape(tf.image.crop_to_bounding_box(image, 6, 6, 51, 51), [np.shape(image)[0], 51, 51])
+        image = tf.reshape(image, [np.shape(image)[0], 51, 51])
         return image.numpy()
 
     def op(self, image, **kwargs):
         r"""Apply Learnlets denoising."""
         # Threshold all scales but the coarse
+        image = utils.reg_format(image)
         self.noise = np.array([self.noise_estimator(image[_i,:,:]) for _i in np.arange(len(image))])
         self.noise = tf.reshape(tf.convert_to_tensor(self.noise), [len(image), 1])
         image = self.convert_and_pad(image)
-        image = self.model.predict(image, self.noise)
-        return self.crop_and_convert(image)
+        image = self.model.predict((image, self.noise))
+        return utils.rca_format(self.crop_and_convert(image))
 
     def cost(self, x, y):
         r"""Return cost."""

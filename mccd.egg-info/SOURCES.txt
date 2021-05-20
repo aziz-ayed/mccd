@@ -1,3 +1,4 @@
+MANIFEST.in
 README.md
 setup.cfg
 setup.py
@@ -15,5 +16,15 @@ mccd.egg-info/SOURCES.txt
 mccd.egg-info/dependency_links.txt
 mccd.egg-info/requires.txt
 mccd.egg-info/top_level.txt
+mccd/saved_learnlets/keras_metadata.pb
+mccd/saved_learnlets/saved_model.pb
+mccd/saved_learnlets/variables/variables.data-00000-of-00001
+mccd/saved_learnlets/variables/variables.index
+mccd/saving_unets/__init__.py
+mccd/saving_unets/saved_model.pb
+mccd/saving_unets/variables/.DS_Store
+mccd/saving_unets/variables/__init__.py
+mccd/saving_unets/variables/variables.data-00000-of-00001
+mccd/saving_unets/variables/variables.index
 tests/__init__.py
 tests/test_pysap_wavelet.py

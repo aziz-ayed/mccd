@@ -774,7 +774,7 @@ class MCCD(object):
         print(np.shape(comp[0]))
         print(np.shape(utils.reg_format(comp[0])))
         #sparsity_prox = prox.StarletThreshold(0)
-        sparsity_prox = prox.Unets()
+        sparsity_prox = prox.Learnlets()
         pos_prox = [prox.PositityOff(H_k) for H_k in H_glob]
         # lin_recombine = [prox.LinRecombine(weights_loc[k], self.Phi_filters)
         #                  for k in range(self.n_ccd)]
@@ -852,7 +852,7 @@ class MCCD(object):
 
                 # Lipschitz constant for ForwardBackward
 ##########                beta = source_glob_grad.spec_rad * 1.5 + rho_phi
-                beta = source_glob_grad.spec_rad * 15
+                beta = source_glob_grad.spec_rad * 1.5
                 tau = 1. / beta
 ################### PROX ALG
                 # Sparsity prox thresholds update
@@ -988,7 +988,7 @@ class MCCD(object):
                     # Conda parameters
                     # (lipschitz of diff. part and operator norm of lin. part)
                     ######beta = source_loc_grad[k].spec_rad * 1.5 + rho_phi
-                    beta = source_loc_grad[k].spec_rad * 15
+                    beta = source_loc_grad[k].spec_rad * 1.5
                     tau = 1. / beta
                     sigma = (1. / lin_recombine[k].norm ** 2) * beta / 2
 
