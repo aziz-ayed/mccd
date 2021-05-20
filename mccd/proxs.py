@@ -16,8 +16,8 @@ from modopt.signal.wavelet import filter_convolve
 from modopt.opt.proximity import ProximityParent
 import mccd.utils as utils
 import tensorflow as tf
-import galsim
 from . import saving_unets as unet_model
+from . import saving_learnlets as learnlet_model
 from learning_wavelets.models.learnlet_model import Learnlet
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
@@ -225,7 +225,7 @@ class Learnlets(ProximityParent):
             steps_per_epoch=1, 
             epochs=1,
             batch_size=12,)
-        learnlets.load_weights('/Users/oa265351/Desktop/mccd_v3/mccd/saving_learnlets/cp.h5')
+        learnlets.load_weights(learnlet_model.__path__[0] + '/cp.h5')
         self.model = learnlets
         self.noise = None
 
