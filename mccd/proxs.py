@@ -186,8 +186,8 @@ class Learnlets(ProximityParent):
     Parameters
     ----------
     model: str
-        Which denoising algorithm to use. 
-        We couldn't save the whole architecture of the model, thus we use the weights of the model. However, this requires a 
+        Which denoising algorithm to use.
+        We couldn't save the whole architecture of the model, thus we use the weights of the model. However, this requires a
         first step of initialization that we didn't need for the U-Nets.
 
     """
@@ -199,8 +199,8 @@ class Learnlets(ProximityParent):
         run_params = {
             'denoising_activation': 'dynamic_soft_thresholding',
             'learnlet_analysis_kwargs':{
-                'n_tiling': 64, 
-                'mixing_details': False,    
+                'n_tiling': 64,
+                'mixing_details': False,
                 'skip_connection': True,
             },
             'learnlet_synthesis_kwargs': {
@@ -219,10 +219,10 @@ class Learnlets(ProximityParent):
             loss='mse',
         )
         learnlets.fit(
-            (im_val, std_val), 
+            (im_val, std_val),
             im_val,
             validation_data=((im_val, std_val), im_val),
-            steps_per_epoch=1, 
+            steps_per_epoch=1,
             epochs=1,
             batch_size=12,)
         learnlets.load_weights(learnlet_model.__path__[0] + '/cp.h5')
@@ -249,7 +249,7 @@ class Learnlets(ProximityParent):
                     window[coord_x, coord_y] = False
         # Calculate noise std dev
         return self.mad(image[window])
-    
+
     def convert_and_pad(self, image):
         r"""Convert images to 64x64x1 shaped tensors to feed the model, using zero-padding."""
         image = tf.reshape(tf.convert_to_tensor(image),
