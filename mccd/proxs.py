@@ -338,12 +338,13 @@ class proxNormalization(ProximityParent):
 
         Following the prefered type.
         """
-        if self.type == 'lines':
-            x_norm = np.linalg.norm(x, axis=1).reshape(-1, 1)
-        else:
-            x_norm = np.linalg.norm(x, axis=0).reshape(1, -1)
+        # if self.type == 'lines':
+        #     x_norm = np.linalg.norm(x, axis=1).reshape(-1, 1)
+        # else:
+        #     x_norm = np.linalg.norm(x, axis=0).reshape(1, -1)
 
-        return x / x_norm
+        # return x / x_norm
+        return x
 
     def cost(self, x):
         r"""Return cost."""
